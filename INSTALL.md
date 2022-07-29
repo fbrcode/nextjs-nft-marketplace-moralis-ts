@@ -73,7 +73,7 @@ On Mac Apple Silicon use: \*frp\_?_darwin_arm64.tar.gz
 
 Example: <https://github.com/fatedier/frp/releases/download/v0.44.0/frp_0.44.0_darwin_arm64.tar.gz>
 
-### Setup
+### CLI Setup
 
 On **Devchain Proxy Server** get the configuration for `hardhat`
 
@@ -83,13 +83,15 @@ Run on command line with: `./frpc -c frpc.ini`
 
 ## Better option: Moralis Admin CLI
 
+Reference: <https://docs.moralis.io/moralis-dapp/tools/moralis-admin-cli>
+
 Use moralis admin cli to manage server connection to local blockchain.
 
 Install: `yarn add --dev moralis-admin-cli`
 
 To see the options, run: `yarn moralis-admin-cli`
 
-### Setup
+### Package run setup
 
 Create a command line option in `package.json` to link the local chain with moralis server.
 
@@ -108,3 +110,17 @@ Example: <https://docs.moralis.io/moralis-dapp/connect-the-sdk/connect-using-nod
 After running `node ./addEvents.js`, we should be able to see the database updated with the events listening being recorded:
 
 - <https://rvqac57rjwq7.usemoralis.com:2083/apps/moralisDashboard/browser/_EventSyncStatus>
+
+## Moralis cloud functions
+
+Reference: <https://docs.moralis.io/moralis-dapp/cloud-code/cloud-functions>
+
+Create a script to run on the server side when we need to.
+
+Example: `./cloudFunctions/updateActiveItems.js`
+
+Keep the Cloud function running with `yarn moralis:cloud` command.
+
+For our use-case, the cloud function whenever one of the 3 event call are synced in the database.
+
+With a new table `ActiveItem` to manage which NFT items are active.
