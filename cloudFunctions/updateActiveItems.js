@@ -14,6 +14,18 @@ Moralis.Cloud.afterSave('ItemListed', async (request) => {
   if (confirmed) {
     logger.info(`Marketplace | Object: ${request.object}`);
     const ActiveItem = Moralis.Object.extend('ActiveItem'); // create table if not exists
+
+    const query = new Moralis.Query(ActiveItem);
+    query.equalTo('marketplaceAddress', request.object.get('address'));
+    query.equalTo('nftAddress', request.object.get('nftAddress'));
+    query.equalTo('tokenId', request.object.get('tokenId'));
+    query.equalTo('seller', request.object.get('seller'));
+    const alreadyListed = await query.first();
+    if (alreadyListed) {
+      logger.info(`Marketplace | Deleting item already listed...`);
+      await alreadyListed.destroy();
+      logger.info(`Marketplace | Item deleted.`);
+    }
     const activeItem = new ActiveItem(); // create a new object
     activeItem.set('marketplaceAddress', request.object.get('address'));
     activeItem.set('nftAddress', request.object.get('nftAddress'));
