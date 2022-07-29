@@ -44,3 +44,67 @@ Tailwind with NextJS: <https://tailwindcss.com/docs/guides/nextjs>
 
 - `yarn add --dev tailwindcss postcss autoprefixer`
 - `yarn tailwindcss init -p`
+
+## Moralis Server
+
+Handling events for a Dapp.
+
+Register user/server and link the app with the server in **`_app.js`**:
+
+```js
+<MoralisProvider appId={APP_ID} serverUrl={SERVER_URL}>
+```
+
+Docs:
+
+- <https://admin.moralis.io/dapps/details/198884>
+- <https://docs.moralis.io/moralis-dapp/automatic-transaction-sync/smart-contract-events>
+
+How to listen for events?
+
+1. Connect the server to our blockchain.
+2. Which contract, which events, and what to do when it hears those events.
+
+Use moralis reverse proxy to connect the local chain to the Moralis server.
+
+- <https://github.com/fatedier/frp/releases>
+
+On Mac Apple Silicon use: \*frp\_?_darwin_arm64.tar.gz
+
+Example: <https://github.com/fatedier/frp/releases/download/v0.44.0/frp_0.44.0_darwin_arm64.tar.gz>
+
+### Setup
+
+On **Devchain Proxy Server** get the configuration for `hardhat`
+
+### Run
+
+Run on command line with: `./frpc -c frpc.ini`
+
+## Better option: Moralis Admin CLI
+
+Use moralis admin cli to manage server connection to local blockchain.
+
+Install: `yarn add --dev moralis-admin-cli`
+
+To see the options, run: `yarn moralis-admin-cli`
+
+### Setup
+
+Create a command line option in `package.json` to link the local chain with moralis server.
+
+```json
+"moralis:sync": "moralis-admin-cli connect-local-devchain --chain hardhat --moralisSubdomain vqac57rjwq7.usemoralis.com --frpcPath ./frp_0440/frpc"
+```
+
+It will use FRP and start listening for blockchain events.
+
+Now we need to tell which events we want to keep watching with `addEvents.js`. With the packages:
+
+`yarn add --dev dotenv`
+
+Example: <https://docs.moralis.io/moralis-dapp/connect-the-sdk/connect-using-node>
+
+After running `node ./addEvents.js`, we should be able to see the database updated with the events listening being recorded:
+
+- <https://rvqac57rjwq7.usemoralis.com:2083/apps/moralisDashboard/browser/_EventSyncStatus>
