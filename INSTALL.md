@@ -124,3 +124,9 @@ Keep the Cloud function running with `yarn moralis:cloud` command.
 For our use-case, the cloud function whenever one of the 3 event call are synced in the database.
 
 With a new table `ActiveItem` to manage which NFT items are active.
+
+## Moralis Queries
+
+Allow to perform queries on moralis databases:
+
+Reference: <https://docs.moralis.io/moralis-dapp/database/queries>
