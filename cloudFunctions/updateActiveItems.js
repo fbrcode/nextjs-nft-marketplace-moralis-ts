@@ -10,9 +10,9 @@ Moralis.Cloud.afterSave('ItemListed', async (request) => {
   // every event gets triggered twice, once on unconfirmed, again on confirmed
   const confirmed = request.object.get('confirmed');
   const logger = Moralis.Cloud.getLogger();
-  logger.info(`Looking for confirmed Tx: ${confirmed}`);
+  logger.info(`Marketplace | Looking for confirmed Tx: ${confirmed}`);
   if (confirmed) {
-    logger.info(`Found a confirmed Tx`);
+    logger.info(`Marketplace | Object: ${request.object}`);
     const ActiveItem = Moralis.Object.extend('ActiveItem'); // create table if not exists
     const activeItem = new ActiveItem(); // create a new object
     activeItem.set('marketplaceAddress', request.object.get('address'));
@@ -21,9 +21,41 @@ Moralis.Cloud.afterSave('ItemListed', async (request) => {
     activeItem.set('price', request.object.get('price'));
     activeItem.set('seller', request.object.get('seller'));
     logger.info(
-      `Adding Address: ${request.object.get('address')}. TokenId: ${request.object.get('tokenId')}`
+      `Marketplace | Adding Address: ${request.object.get(
+        'address'
+      )}. TokenId: ${request.object.get('tokenId')}`
     );
     logger.info('Saving...');
     await activeItem.save();
+  }
+});
+
+// afterSave means anytime sometime is saved to a table, we perform some action
+Moralis.Cloud.afterSave('ItemCancelled', async (request) => {
+  // every event gets triggered twice, once on unconfirmed, again on confirmed
+  const confirmed = request.object.get('confirmed');
+  const logger = Moralis.Cloud.getLogger();
+  logger.info(`Marketplace | Looking for confirmed Tx: ${confirmed}`);
+  if (confirmed) {
+    logger.info(`Marketplace | Object: ${request.object}`);
+    const ActiveItem = Moralis.Object.extend('ActiveItem'); // create table if not exists
+    const query = new Moralis.Query(ActiveItem);
+    query.equalTo('marketplaceAddress', request.object.get('address'));
+    query.equalTo('nftAddress', request.object.get('nftAddress'));
+    query.equalTo('tokenId', request.object.get('tokenId'));
+    logger.info(`Marketplace | Query: ${query}`);
+    const canceledItem = await query.first();
+    logger.info(`Marketplace | CancelItem: ${canceledItem}`);
+    if (canceledItem) {
+      logger.info('Marketplace | Canceling item (deleting from active items table)...');
+      await canceledItem.destroy();
+      logger.info(`Marketplace | Canceled!`);
+    } else {
+      logger.info(
+        `Marketplace | Item not found in active items table with address ${request.object.get(
+          'address'
+        )} and tokenId ${request.object.get('tokenId')}`
+      );
+    }
   }
 });
