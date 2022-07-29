@@ -59,3 +59,33 @@ Moralis.Cloud.afterSave('ItemCancelled', async (request) => {
     }
   }
 });
+
+// afterSave means anytime sometime is saved to a table, we perform some action
+Moralis.Cloud.afterSave('ItemBought', async (request) => {
+  // every event gets triggered twice, once on unconfirmed, again on confirmed
+  const confirmed = request.object.get('confirmed');
+  const logger = Moralis.Cloud.getLogger();
+  logger.info(`Marketplace | Looking for confirmed Tx: ${confirmed}`);
+  if (confirmed) {
+    logger.info(`Marketplace | Object: ${request.object}`);
+    const ActiveItem = Moralis.Object.extend('ActiveItem'); // create table if not exists
+    const query = new Moralis.Query(ActiveItem);
+    query.equalTo('marketplaceAddress', request.object.get('address'));
+    query.equalTo('nftAddress', request.object.get('nftAddress'));
+    query.equalTo('tokenId', request.object.get('tokenId'));
+    logger.info(`Marketplace | Query: ${query}`);
+    const boughtItem = await query.first();
+    logger.info(`Marketplace | ItemBought: ${boughtItem}`);
+    if (boughtItem) {
+      logger.info('Marketplace | Deleting item from active items table...');
+      await boughtItem.destroy();
+      logger.info(`Marketplace | Deleted!`);
+    } else {
+      logger.info(
+        `Marketplace | Item not found in active items table with address ${request.object.get(
+          'address'
+        )} and tokenId ${request.object.get('tokenId')}`
+      );
+    }
+  }
+});
