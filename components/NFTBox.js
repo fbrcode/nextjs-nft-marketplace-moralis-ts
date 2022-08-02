@@ -9,8 +9,21 @@ import {
   networkMapping,
 } from '../constants';
 
+const truncateAddress = (address, desiredLength) => {
+  if (address.length <= desiredLength) {
+    return address;
+  }
+  const separator = '...';
+  const charsToShow = desiredLength - separator.length;
+  const frontChars = Math.ceil(charsToShow / 2);
+  const backChars = Math.floor(charsToShow / 2);
+  return (
+    address.substring(0, frontChars) + separator + address.substring(address.length - backChars)
+  );
+};
+
 export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price, seller }) {
-  const { chainId: chainIdHex, isWeb3Enabled } = useMoralis();
+  const { chainId: chainIdHex, isWeb3Enabled, account } = useMoralis();
   const [imageURI, setImageURI] = useState('');
   const [tokenName, setTokenName] = useState('');
   const [tokenDescription, setTokenDescription] = useState('');
@@ -72,6 +85,9 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
     }
   }, [isWeb3Enabled]);
 
+  const isOwnedByUser = seller === account || seller === undefined;
+  const formattedSellerAddress = isOwnedByUser ? 'you' : truncateAddress(seller, 15) || 'unknown';
+
   return (
     <div>
       <div>
@@ -80,7 +96,7 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
             <div className="p-2">
               <div className="flex flex-col items-end gap-2">
                 <div>#{tokenId}</div>
-                <div className="italic text-sm">Owned by {seller}</div>
+                <div className="italic text-sm">Owned by {formattedSellerAddress}</div>
                 <Image loader={() => imageURI} src={imageURI} height="200" width="200" />
                 <div className="font-bold">{ethers.utils.formatUnits(price, 'ether')} ETH</div>
               </div>
