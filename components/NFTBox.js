@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useWeb3Contract, useMoralis } from 'react-moralis';
 import Image from 'next/image';
-import { Card } from 'web3uikit';
+import { Card, useNotification } from 'web3uikit';
 import { ethers } from 'ethers';
 import {
-  // loadDeployedNftMarketplaceContract,
+  loadDeployedNftMarketplaceContract,
   loadDeployedBasicNftContract,
   networkMapping,
 } from '../constants';
@@ -29,39 +29,53 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
   const [tokenName, setTokenName] = useState('');
   const [tokenDescription, setTokenDescription] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const hideModal = () => setShowModal(false);
+  const dispatch = useNotification();
 
   const chainId = parseInt(chainIdHex);
   const networkName = networkMapping[chainId];
   // console.log(`NFTBox: chainId: ${chainId}`);
   // console.log(`NFTBox: networkName: ${networkName}`);
-  // const nftMarketplaceContract = loadDeployedNftMarketplaceContract(networkName);
   const basicNftContract = loadDeployedBasicNftContract(networkName);
-  // console.log(`NFTBox: basicNftContract: ${basicNftContract}`);
-  // const basicNftAddress = basicNftContract.address;
   const basicNftAbi = basicNftContract.abi;
-  // console.log(`basicNftAbi: ${JSON.stringify(basicNftAbi, null, 2)}`);
-  // console.log(`basicNftAbi (length): ${basicNftAbi.length}`);
-  // console.log(`basicNftAddress: ${nftAddress}`);
-  // console.log(`basicNftContract Address: ${basicNftAddress}`);
-  // console.log(`tokenId: ${tokenId}`);
 
-  const options = {
+  const nftMarketplaceContract = loadDeployedNftMarketplaceContract(networkName);
+  const nftMarketplaceAbi = nftMarketplaceContract.abi;
+
+  // const fixedTokenId = ethers.BigNumber.from('0');
+  // console.log(fixedTokenId);
+
+  const optionsTokenURI = {
     abi: basicNftAbi,
     contractAddress: nftAddress,
     functionName: 'TOKEN_URI',
     params: {
-      tokenId,
+      tokenId: tokenId,
+    },
+  };
+  // console.log(optionsTokenURI);
+
+  const { runContractFunction: getTokenURI } = useWeb3Contract(optionsTokenURI);
+
+  const optionsBuyItem = {
+    abi: nftMarketplaceAbi,
+    contractAddress: marketplaceAddress,
+    functionName: 'buyItem',
+    msgValue: price,
+    params: {
+      nftAddress: nftAddress,
+      tokenId: tokenId,
     },
   };
 
-  const { runContractFunction: getTokenURI } = useWeb3Contract(options);
+  const { runContractFunction: buyItem } = useWeb3Contract(optionsBuyItem);
 
   async function updateUI() {
-    console.log('options:');
-    console.log(options);
     // get the token URI
     // using the image tag from the token URI, get the image
-    const tokenURI = await getTokenURI();
+    const tokenURI = await getTokenURI({
+      onError: (err) => console.log(err),
+    });
     console.log(`Token URI ==> ${tokenURI}`);
     if (tokenURI) {
       // cheating to have more browser support :: use IPFS gateway instead,
@@ -93,7 +107,20 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
   const handleCardClick = () => {
     isOwnedByUser
       ? setShowModal(true) // show the update listing modal
-      : console.log('lets buy!!'); // call the buyItem function
+      : // call the buyItem function
+        buyItem({
+          onError: (err) => console.log(err),
+          onSuccess: () => handleBuyItemSuccess(),
+        });
+  };
+
+  const handleBuyItemSuccess = () => {
+    dispatch({
+      type: 'success',
+      message: 'Item bought!',
+      title: 'Item Bought',
+      position: 'topR',
+    });
   };
 
   return (
@@ -101,7 +128,13 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
       <div>
         {imageURI ? (
           <div>
-            <UpdateListingModal isVisible={showModal} />
+            <UpdateListingModal
+              isVisible={showModal}
+              tokenId={tokenId}
+              marketplaceAddress={marketplaceAddress}
+              nftAddress={nftAddress}
+              onClose={hideModal}
+            />
             <Card title={tokenName} description={tokenDescription} onClick={handleCardClick}>
               <div className="p-2">
                 <div className="flex flex-col items-end gap-2">
