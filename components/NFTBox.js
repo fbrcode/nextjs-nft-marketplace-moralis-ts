@@ -8,6 +8,7 @@ import {
   loadDeployedBasicNftContract,
   networkMapping,
 } from '../constants';
+import UpdateListingModal from './UpdateListingModal';
 
 const truncateAddress = (address, desiredLength) => {
   if (address.length <= desiredLength) {
@@ -92,16 +93,19 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
     <div>
       <div>
         {imageURI ? (
-          <Card title={tokenName} description={tokenDescription}>
-            <div className="p-2">
-              <div className="flex flex-col items-end gap-2">
-                <div>#{tokenId}</div>
-                <div className="italic text-sm">Owned by {formattedSellerAddress}</div>
-                <Image loader={() => imageURI} src={imageURI} height="200" width="200" />
-                <div className="font-bold">{ethers.utils.formatUnits(price, 'ether')} ETH</div>
+          <div>
+            <UpdateListingModal isVisible={false} />
+            <Card title={tokenName} description={tokenDescription}>
+              <div className="p-2">
+                <div className="flex flex-col items-end gap-2">
+                  <div>#{tokenId}</div>
+                  <div className="italic text-sm">Owned by {formattedSellerAddress}</div>
+                  <Image loader={() => imageURI} src={imageURI} height="200" width="200" />
+                  <div className="font-bold">{ethers.utils.formatUnits(price, 'ether')} ETH</div>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         ) : (
           <div>Loading...</div>
         )}
