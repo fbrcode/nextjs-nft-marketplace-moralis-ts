@@ -28,6 +28,7 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
   const [imageURI, setImageURI] = useState('');
   const [tokenName, setTokenName] = useState('');
   const [tokenDescription, setTokenDescription] = useState('');
+  const [showModal, setShowModal] = useState(false);
 
   const chainId = parseInt(chainIdHex);
   const networkName = networkMapping[chainId];
@@ -89,13 +90,19 @@ export default function NFTBox({ marketplaceAddress, nftAddress, tokenId, price,
   const isOwnedByUser = seller === account || seller === undefined;
   const formattedSellerAddress = isOwnedByUser ? 'you' : truncateAddress(seller, 15) || 'unknown';
 
+  const handleCardClick = () => {
+    isOwnedByUser
+      ? setShowModal(true) // show the update listing modal
+      : console.log('lets buy!!'); // call the buyItem function
+  };
+
   return (
     <div>
       <div>
         {imageURI ? (
           <div>
-            <UpdateListingModal isVisible={false} />
-            <Card title={tokenName} description={tokenDescription}>
+            <UpdateListingModal isVisible={showModal} />
+            <Card title={tokenName} description={tokenDescription} onClick={handleCardClick}>
               <div className="p-2">
                 <div className="flex flex-col items-end gap-2">
                   <div>#{tokenId}</div>
