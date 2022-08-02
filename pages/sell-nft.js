@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import styles from '../styles/Home.module.css';
-import { Form, useNotification } from 'web3uikit';
+import { Form, useNotification, Button } from 'web3uikit';
 import { ethers } from 'ethers';
 import { useWeb3Contract, useMoralis } from 'react-moralis';
 import {
@@ -9,9 +9,10 @@ import {
   loadDeployedBasicNftContract,
   networkMapping,
 } from '../constants';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
-  const { chainId: chainIdHex } = useMoralis();
+  const { chainId: chainIdHex, account, isWeb3Enabled } = useMoralis();
   const chainId = parseInt(chainIdHex);
   const networkName = networkMapping[chainId];
   const basicNftContract = loadDeployedBasicNftContract(networkName);
@@ -22,10 +23,11 @@ export default function Home() {
 
   const dispatch = useNotification();
 
+  const [proceeds, setProceeds] = useState('0');
+
   const { runContractFunction } = useWeb3Contract();
 
   async function approveAndList(data) {
-    // console.log('Approving...');
     let [nftAddress, tokenId, price] = data.data;
     nftAddress = nftAddress.inputResult;
     tokenId = tokenId.inputResult;
@@ -52,7 +54,6 @@ export default function Home() {
   }
 
   async function handleApproveSuccess(nftAddress, tokenId, price) {
-    // console.log('Time to list...');
     const listOptions = {
       abi: marketplaceAbi,
       contractAddress: marketplaceAddress,
@@ -83,6 +84,61 @@ export default function Home() {
     });
   }
 
+  const getProceedsOptions = {
+    abi: marketplaceAbi,
+    contractAddress: marketplaceAddress,
+    functionName: 'getProceeds',
+    params: {
+      seller: account,
+    },
+  };
+
+  async function setupUI() {
+    const returnedProceeds = await runContractFunction({
+      params: getProceedsOptions,
+      onError: (error) => {
+        console.log(error);
+        console.log(getProceedsOptions);
+      },
+    });
+    if (returnedProceeds) {
+      setProceeds(returnedProceeds.toString());
+    }
+  }
+
+  useEffect(() => {
+    if (isWeb3Enabled) {
+      setupUI();
+    }
+  }, [proceeds, account, isWeb3Enabled, chainId]);
+
+  const withdrawProceedsOptions = {
+    abi: marketplaceAbi,
+    contractAddress: marketplaceAddress,
+    functionName: 'withdrawProceeds',
+    params: {},
+  };
+
+  async function performWithdraw() {
+    runContractFunction({
+      params: withdrawProceedsOptions,
+      onError: (error) => {
+        console.log(error);
+        console.log(withdrawProceedsOptions);
+      },
+      onSuccess: handleWithdrawSuccess,
+    });
+  }
+
+  const handleWithdrawSuccess = async (tx) => {
+    await tx.wait(1);
+    dispatch({
+      type: 'success',
+      message: 'Withdrawing proceeds',
+      position: 'topR',
+    });
+  };
+
   return (
     <div className={styles.container}>
       <Form
@@ -111,6 +167,14 @@ export default function Home() {
         title="Sell your NFT!"
         id="main-form"
       />
+      <div className=" p-2 py-4">
+        Withdraw {ethers.utils.formatUnits(proceeds, 'ether')} ETH proceeds
+      </div>
+      {proceeds != '0' ? (
+        <Button onClick={() => performWithdraw()} text="Withdraw" type="button" />
+      ) : (
+        <div>No proceeds detected</div>
+      )}
     </div>
   );
 }
