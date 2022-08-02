@@ -29,11 +29,11 @@ export default function Home() {
             <div>Loading...</div>
           ) : (
             listedNfts.map((nft) => {
-              console.log(`NFT Attributes:`);
-              console.log(nft.attributes);
+              // console.log(`NFT Attributes:`);
+              // console.log(nft.attributes);
               const { marketplaceAddress, nftAddress, tokenId, price, seller } = nft.attributes;
               const key = nftAddress.toString() + tokenId.toString();
-              console.log(`Key: ${key}`);
+              // console.log(`Key: ${key}`);
               // marketplaceAddress: "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512"
               // nftAddress: "0x5fbdb2315678afecb367f032d93f642f64180aa3"
               // price: "100000000000000000"
